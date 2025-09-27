@@ -7,8 +7,17 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3   # リポジトリをチェックアウト
+        with:
+          fetch-depth: 0            # 全履歴取得（コミット一覧用）
+
+      - name: Format commit messages
+        id: format
+        run: |
+          echo "COMMITS=$(git log ${{ github.event.before }}..${{ github.sha }} --pretty=format:'- %h %an %s' | head -20)" >> $GITHUB_OUTPUT
+
       - name: Send message to Discord
         run: |
           curl -H "Content-Type: application/json" \
-          -d "{\"content\": \"📢 New push to *${GITHUB_REPOSITORY}* by *${GITHUB_ACTOR}* on branch *${GITHUB_REF_NAME}*\"}" \
+          -d "{\"content\": \"📢 Push to *${GITHUB_REPOSITORY}* by *${GITHUB_ACTOR}* on branch *${GITHUB_REF_NAME}*\n\n${{ steps.format.outputs.COMMITS }}\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
